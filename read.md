@@ -1,1 +1,1 @@
-This is for roboshop project using ansible automation
+This is for roboshop project using ansible script automation
