@@ -39,8 +39,6 @@
     - name: print the ec2 output
       ansible.builtin.debug:
         msg: "{{ ec2_output }}"
-        when: 
-        - action == "create"
     
     - name: create route53 record with private
       amazon.aws.route53:
@@ -93,7 +91,7 @@
   # Terminate the ec2 instances
     - name: terminate ec2 instances
       amazon.aws.ec2_instance:
-        instance_name: "{{ item }}-{{ env }}.{{ domain_name }}"
+        name: "{{ item }}-{{ env }}.{{ domain_name }}"
         region: "{{ region }}"
         state: absent
         wait: true
