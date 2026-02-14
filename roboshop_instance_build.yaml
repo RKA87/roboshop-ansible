@@ -1,0 +1,101 @@
+- name: "create ec2 instance for roboshop project"
+  hosts: localhost
+  connection: local
+  become: false
+
+  vars:
+    sg_id: "sg-0e3e5d0160ba94b0b"
+    ami_id: "ami-0220d79f3f480ecf5"
+    instance_type: "t3.micro"
+    domain_name: "rkak87.online"
+    region: "us-east-1"
+    env: "dev"
+    action: "{{ action | default('create') }}"
+    instances:
+      - mongodb
+      - catalogue
+      - frontend
+    default_tags:
+      Environment: "{{ env }}"
+      Project: roboshop
+      CostCompany: joindevops
+      CostCenter: aws-data-center
+    
+    tasks:
+    - name: create ec2 instances
+      amazon.aws.ec2_instance:
+        instance_type: "{{ instance_type }}"
+        image_id: "{{ ami_id }}"
+        name: "{{ item }}-{{ env }}.{{ domain_name }}"
+        security_group: "{{ sg_id }}"
+        region: "{{ region }}"
+        tags: "{{ default_tags }}"
+        state: present
+        wait: true
+      loop: "{{ instances}}"
+      register: ec2_output
+      when: action == "create"
+
+    - name: print the ec2 output
+      ansible.builtin.debug:
+        msg: "{{ ec2_output }}"
+        when: 
+        - action == "create"
+    
+    - name: create route53 record with private
+      amazon.aws.route53:
+        state: present
+        zone: "{{ domain_name }}"
+        record: "{{ item.item }}-{{ env }}.{{ domain_name }}"
+        type: A
+        ttl: 1
+        value: "{{ item.instances[0].private_ip_address }}"
+      loop: "{{ ec2_output.results }}"
+      when:
+      - action == "create"
+
+    - name: create route53 record with public
+      amazon.aws.route53:
+        state: present
+        zone: "{{ domain_name }}"
+        record: "webapp-{{ env }}.{{ domain_name }}"
+        type: A
+        ttl: 1
+        value: "{{ item.instances[0].public_ip_address }}"
+      loop: "{{ ec2_output.results }}"
+      when:
+      - action == "create"
+      - item.item == "frontend"
+
+  # Delete the route53 record with private
+    - name: delete route53 record with private
+      amazon.aws.route53:
+        state: absent
+        zone: "{{ domain_name }}"
+        record: "{{ item }}-{{ env }}.{{ domain_name }}"
+        type: A
+      loop: "{{ instances }}"
+      when:
+      - action == "delete"
+
+  # Delete the route53 record with public
+    - name: delete route53 record with public
+      amazon.aws.route53:
+        state: absent
+        zone: "{{ domain_name }}"
+        record: "webapp-{{ env }}.{{ domain_name }}"
+        type: A
+      loop: "{{ instances }}"
+      when:
+      - action == "delete"
+      - item == "frontend"
+  
+  # Terminate the ec2 instances
+    - name: terminate ec2 instances
+      amazon.aws.ec2_instance:
+        instance_name: "{{ item }}-{{ env }}.{{ domain_name }}"
+        region: "{{ region }}"
+        state: absent
+        wait: true
+      loop: "{{ instances }}"
+      when: action == "delete"
