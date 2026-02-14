@@ -21,7 +21,7 @@
       CostCompany: joindevops
       CostCenter: aws-data-center
     
-    tasks:
+  tasks:
     - name: create ec2 instances
       amazon.aws.ec2_instance:
         instance_type: "{{ instance_type }}"
