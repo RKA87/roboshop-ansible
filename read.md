@@ -1,1 +1,0 @@
-This is for roboshop project using ansible script automation
