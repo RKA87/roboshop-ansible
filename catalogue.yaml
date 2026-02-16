@@ -80,6 +80,7 @@
     
     - name: "Load the masterdata for catalogue service"
       ansible.builtin.shell: mongosh --host "{{ MONGODB_HOST }}" </app/db/master-data.js
+      when: catalogue_output.stdout  | int < 0 #here pipe is acts as filter, syntax: variable | filter for reference
 
     - name: "Daemon reload"
       ansible.builtin.systemd:
