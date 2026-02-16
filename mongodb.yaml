@@ -1,32 +1,27 @@
-- name: "Configure Mongodb for roboshop project"
+- name: "Configure mongodb for roboshop project"
   hosts: mongodb
   become: true
-  
+
   tasks:
-    - name: "Copy Mongodb repo file"
+    - name: "Copy the mongodb.repo file"
       ansible.builtin.copy:
-        src: mongodb.repo
+        src: files/mongodb.repo
         dest: /etc/yum.repos.d/mongodb.repo
 
-    - name: "Install Mongodb"
+    - name: "Install mongodb-org package"
       ansible.builtin.dnf:
         name: mongodb-org
         state: present
-    
-    - name: Replace all instances of '127.0.0.1' with '0.0.0.0' in mongodb config
+
+    #Allow remote access to mongodb
+    - name: "update the mongodb.conf file to allow remote access"
       ansible.builtin.replace:
         path: /etc/mongod.conf
         regexp: '127.0.0.1'
-        replace: '0.0.0.0'
-        backup: yes
-  
-    - name: "Start Mongodb"
-      ansible.builtin.service:
+        line: '0.0.0.0'
+
+    - name: "Start and enable mongod service"
+      ansible.builtin.systemd:
         name: mongod
-        enabled: yes
         state: started
-    
-    - name: "Restart Mongodb"
-      ansible.builtin.service:
-        name: mongod
-        state: restarted
+        enabled: true
