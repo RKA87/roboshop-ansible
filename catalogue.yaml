@@ -1,0 +1,90 @@
+- name: "Configure Catalogue Backend for roboshop project"
+  hosts: catalogue
+  become: true
+  
+  tasks:
+    - name: "Disable NodeJS"
+      ansible.builtin.command:
+        cmd: dnf module disable nodejs -y
+        ignore_errors: yes
+
+    - name: "Eanle NodeJS"
+      ansible.builtin.command:
+        cmd: dnf module enable nodejs:20 -y
+        ignore_errors: yes
+    
+    - name: "Install Nodejs"
+      ansible.builtin.dnf:
+        name: nodejs
+        state: present
+    
+    - name: Create the 'system user' account for roboshop
+      ansible.builtin.user:
+        name: roboshop
+        comment: "roboshop System User account"
+        home: /app
+        shell: /sbin/nologin
+        state: present
+    
+    - name: Create the application directory
+      ansible.builtin.file:
+        path: /app
+        state: directory
+
+    - name: "Remove the application directory contents"
+      ansible.builtin.shell: rm -rf /app/*
+
+    - name: "Download the application code"
+      ansible.builtin.get_url:
+        url: https://roboshop-artifacts.s3.amazonaws.com/catalogue-v3.zip
+        dest: /tmp/catalogue.zip
+    
+    - name: "Unzip the application code"
+      ansible.builtin.unarchive:
+        src: /tmp/catalogue.zip
+        dest: /app
+        remote_src: yes
+    
+    - name: "delete the tmp zip file"
+      ansible.builtin.file:
+        path: /tmp/catalogue.zip
+        state: absent
+    
+    - name: "Install npm dependencies"
+      community.general.npm:
+        path: /app
+        state: present
+    
+    - name: "Copy the Catalogue Service file"
+      ansible.builtin.template:
+        src: catalogue.service
+        dest: /etc/systemd/system/catalogue.service
+
+    - name: Reload systemd daemon
+      ansible.builtin.systemd:
+        daemon_reload: yes
+    
+    - name: "Copy the MongoDB repo file for loading the product from database and verify it"
+      ansible.builtin.copy:
+        src: mongodb.repo
+        dest: /etc/yum.repos.d/mongodb.repo
+    
+    - name: "Install MongoDB client for loading the product from database and verify it"
+      ansible.builtin.dnf:
+        name: mongodb-mongosh
+        state: present
+    
+    - name: "Check the data from MongoDB"
+      ansible.builtin.command:
+        cmd: mongosh --host "{{ MONGODB_HOST }}" --quiet  --eval 'db.getMongo().getDBNames().indexOf("catalogue")'
+      register: mongodb_catalogue_check
+      changed_when: false
+
+    - name: "Print the Catalogue Check Output"
+      ansible.builtin.debug:
+        var: mongodb_catalogue_check
+    
+    - name: "Load the Catalogue data to MongoDB"
+      
+
+  
