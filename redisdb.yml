@@ -1,0 +1,35 @@
+- name: "Configure redis for roboshop project"
+  hosts: redisdb
+  become: true
+
+  tasks:
+
+    - name: "Disable redis module"
+      ansible.builtin.command: "dnf module disable redis -y"
+
+    - name: "Enable the redis:7 module"
+      ansible.builtin.command: "dnf module enable redis:7 -y"
+
+    - name: "Install redis"
+      ansible.builtin.dnf:
+        name: redis
+        state: present
+
+    #Allow remote access and update protected mode to no
+    - name: "Update the redis configuration to allow remote access"
+      ansible.builtin.replace:
+        path: /etc/redis.conf
+        regexp: '127.0.0.1'
+        replace: '0.0.0.0'
+    
+    - name: "Update the redis configuration to disable protected mode"
+      ansible.builtin.lineinfile:
+        path: /etc/redis.conf
+        regexp: 'protected-mode'
+        line: 'protected-mode no'
+    
+    - name: "Start and enable redis service"
+      ansible.builtin.service:
+        name: redis
+        state: restarted
+        enabled: true
