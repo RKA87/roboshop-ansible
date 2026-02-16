@@ -1,0 +1,25 @@
+- name: "Configure rabbitmq for roboshop project"
+  hosts: rabbitmq
+  become: true
+
+  tasks:
+    - name: "Install rabbitmq server"
+      ansible.builtin.dnf:
+        name: rabbitmq-server
+        state: present
+
+    - name: "Start rabbitmq server"
+      ansible.builtin.service:
+        name: rabbitmq-server
+        state: started
+
+    - name: "Add application user to rabbitmq"
+      ansible.builtin.command: rabbitmqctl add_user roboshop roboshop123
+
+    - name: "Set permissions for application user"
+      ansible.builtin.command: rabbitmqctl set_permissions -p / roboshop ".*" ".*" ".*"
+
+    - name: "restart the rabbitmq server"
+      ansible.builtin.service:
+        name: rabbitmq-server
+        state: restarted

@@ -1,0 +1,78 @@
+- name: "Configure shipping for roboshop project"
+  hosts: shipping
+  become: true
+
+  tasks:
+  - name: "Install mavnen and mysql"
+    ansible.builtin.dnf:
+      name: "{{ item }}"
+      state: present
+    loop:
+      - maven
+      - mysql
+  
+  - name: "Configure system user for shipping"
+    ansible.builtin.user:
+      name: roboshop
+      shell: /sbin/nologin
+      home: /app
+      comment: "roboshop system user"
+      state: present
+      system: true
+  
+  - name: "Delete the existing application directory"
+    ansible.builtin.file:
+      path: /app
+      state: absent
+
+  - name: "Create application directory for shipping"
+    ansible.builtin.file:
+      path: /app
+      state: directory
+  
+  - name: "Delete if any existing shipping code"
+    ansible.builtin.file:
+      path: /tmp/shipping.zip
+      state: absent
+
+  - name: "Download the shipping code from url"
+    ansible.builtin.get_url:
+      url: "https://roboshop-artifacts.s3.amazonaws.com/shipping-v3.zip"
+      dest: /tmp/shipping.zip
+  
+  - name: "Unzip the downloaded file"
+    ansible.builtin.unarchive:
+      src: /tmp/shipping.zip
+      dest: /app
+      remote_src: true
+
+  #Install depenedencies
+  - name: "Build the shipping application"
+    ansible.builtin.command: "mvn clean package"
+    args:
+      chdir: /app
+  
+  - name: "Move the shipping jar file to shipping.jar"
+    ansible.builtin.command: "mv /app/target/shipping-1.0.jar /app/shipping.jar"
+  
+  - name: "systemd service file for shipping"
+    ansible.builtin.template:
+      src: templates/shipping.service.j2
+      dest: /etc/systemd/system/shipping.service
+  
+  - name: "Reload systemd"
+    ansible.builtin.systemd:
+      daemon_reload: yes
+  
+  - name: "Import the shipping mysql schema"
+    ansible.builtin.shell: "mysql -h {{ MYSQLDB_HOST }} -uroot -pRoboShop@1 < {{ item }}"
+    loop:
+      - /app/db/schema.sql
+      - /app/db/app-user.sql
+      - /app/db/master-data.sql
+
+  - name: "Start the shipping service"
+    ansible.builtin.service:
+      name: shipping
+      state: restarted
+      enabled: true
