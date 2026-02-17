@@ -10,7 +10,7 @@
     domain_name: "rkak87.online"
     region: "us-east-1"
     env: "dev"
-    action: "{{ action | default('create') }}"
+    # action: "{{ action | default('create') }}"
     instances:
       - mongodb
       - catalogue
@@ -42,7 +42,7 @@
         wait: true
       loop: "{{ instances}}"
       register: ec2_output
-      when: action == "{{ action }}"
+      when: action == "create"
 
     - name: print the ec2 output
       ansible.builtin.debug:
