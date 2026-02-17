@@ -17,8 +17,8 @@
     - name: "update the mongodb.conf file to allow remote access"
       ansible.builtin.replace:
         path: /etc/mongod.conf
-        regexp: '127\.0\.0\.1'
-        line: '0.0.0.0'
+        regexp: '127.0.0.1'
+        replace: '0.0.0.0'
       register: mongodconf_result
     
     - name: "print the result of mongod.conf"
