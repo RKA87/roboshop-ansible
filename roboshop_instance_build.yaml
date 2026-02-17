@@ -59,7 +59,7 @@
         overwrite: yes
       loop: "{{ ec2_output.results }}"
       when:
-      - action == "create"
+      - action | default('create') == "create"
 
     - name: create route53 record with public
       amazon.aws.route53:
@@ -72,7 +72,7 @@
         overwrite: yes
       loop: "{{ ec2_output.results }}"
       when:
-      - action == "create"
+      - action | default('create') == "create"
       - item.item == "frontend"
 
   # Delete the route53 record with private
@@ -84,7 +84,7 @@
         type: A
       loop: "{{ instances }}"
       when:
-      - action == "delete"
+      - action | default('delete') == "delete"
 
   # Delete the route53 record with public
     - name: delete route53 record with public
@@ -95,7 +95,7 @@
         type: A
       loop: "{{ instances }}"
       when:
-      - action == "delete"
+      - action | default('delete') == "delete"
       - item == "frontend"
   
   # Terminate the ec2 instances
@@ -106,4 +106,4 @@
         state: absent
         wait: true
       loop: "{{ instances }}"
-      when: action == "delete"
+      when: action | default('delete') == "delete"
