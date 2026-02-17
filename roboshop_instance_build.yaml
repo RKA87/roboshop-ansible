@@ -42,7 +42,7 @@
         wait: true
       loop: "{{ instances}}"
       register: ec2_output
-      when: action == "create"
+      when: action | default('create') == "create"
 
     - name: print the ec2 output
       ansible.builtin.debug:
