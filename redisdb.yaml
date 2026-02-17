@@ -18,7 +18,7 @@
     #Allow remote access and update protected mode to no
     - name: "Update the redis configuration to allow remote access"
       ansible.builtin.replace:
-        path: /etc/redis.conf
+        path: /etc/redis/redis.conf
         regexp: '127.0.0.1'
         replace: '0.0.0.0'
       register: redisconf_result
