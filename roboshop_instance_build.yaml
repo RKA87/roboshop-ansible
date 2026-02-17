@@ -84,7 +84,7 @@
         type: A
       loop: "{{ instances }}"
       when:
-      - action | default('delete') == "delete"
+      - action | default('create') == "delete"
 
   # Delete the route53 record with public
     - name: delete route53 record with public
@@ -95,7 +95,7 @@
         type: A
       loop: "{{ instances }}"
       when:
-      - action | default('delete') == "delete"
+      - action | default('create') == "delete"
       - item == "frontend"
   
   # Terminate the ec2 instances
@@ -106,4 +106,4 @@
         state: absent
         wait: true
       loop: "{{ instances }}"
-      when: action | default('delete') == "delete"
+      when: action | default('create') == "delete"
