@@ -3,6 +3,11 @@
   become: true
 
   tasks:
+    - name: "Copy Rabbitmq repo file"
+      ansible.builtin.copy:
+        src: files/rabbitmq.repo
+        dest: /etc/yum.repos.d/rabbitmq.repo
+
     - name: "Install rabbitmq server"
       ansible.builtin.dnf:
         name: rabbitmq-server
