@@ -15,17 +15,12 @@
         name: nginx
         state: present
 
-    - name: "Copy nginx configuration file"
-      copy:
-        src: files/frontend.conf
-        dest: /etc/nginx/default.d/roboshop.conf
-
     - name: "Remove directory of nginx configuration under html"
       ansible.builtin.file:
         path: /usr/share/nginx/html
         state: absent
     
-    - name: "Create nginx configuration directory"
+    - name: "Create directory of nginx configuration under html"
       ansible.builtin.file:
         path: /usr/share/nginx/html
         state: directory
@@ -47,8 +42,8 @@
         path: /etc/nginx/nginx.conf
 
     - name: "Copy nginx configuration file"
-      copy:
-        src: files/nginx.conf
+      ansible.builtin.copy:
+        src: templates/nginx.conf.j2
         dest: /etc/nginx/nginx.conf
 
     - name: "Start nginx service"
