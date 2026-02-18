@@ -53,7 +53,7 @@
 
     - name: "Copy the systemd service file for dispatch"
       ansible.builtin.copy:
-        src: files/dispatch.service
+        src: templates/dispatch.service.j2
         dest: /etc/systemd/system/dispatch.service
     
     - name: "Reload the systemd daemon"
